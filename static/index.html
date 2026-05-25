@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Publishing Image Crop Tool</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <header class="top-header">
+      <div class="brand">gentize</div>
+      <div class="title-block">
+        <h1>Publishing Image Crop Tool</h1>
+        <p>Professional Workflow Dashboard</p>
+      </div>
+      <label class="theme-toggle">
+        <span>Dark Mode</span>
+        <input type="checkbox" id="darkModeToggle" />
+        <span class="toggle-slider"></span>
+      </label>
+    </header>
+
+    <section class="panel-row upload-settings">
+      <div class="panel upload-panel">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon" aria-hidden="true">&#9729;&#8593;</div>
+          <p class="drop-title">Drag &amp; Drop PDF Here</p>
+          <p class="drop-or">or</p>
+          <button type="button" class="btn-outline" id="chooseFileBtn">Choose File</button>
+          <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp" hidden />
+        </div>
+        <p class="file-name" id="fileName">No file selected</p>
+        <label class="setting-field output-format-field">
+          <span>Output Format (before processing)</span>
+          <select id="formatSelect">
+            <option value="png" selected>PNG</option>
+            <option value="tiff">TIFF</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </label>
+        <div class="action-row">
+          <button type="button" class="btn-process" id="startBtn">
+            <span class="btn-icon">&#9654;</span> Process PDF
+          </button>
+          <button type="button" class="btn-stop" id="stopBtn" disabled>stop</button>
+        </div>
+      </div>
+
+      <div class="panel settings-panel">
+        <label class="setting-field">
+          <span>DPI</span>
+          <select id="dpiSelect">
+            <option value="300" selected>300 DPI</option>
+            <option value="600">600 DPI</option>
+            <option value="1200">1200 DPI</option>
+          </select>
+        </label>
+        <label class="setting-field">
+          <span>Colour Mode</span>
+          <p class="field-hint" id="cmykHint">CMYK saves as true CMYK (TIFF/PDF). PNG uses CMYK data at your DPI.</p>
+          <select id="modeSelect">
+            <option value="rgb" selected>RGB</option>
+            <option value="grayscale">GRAYSCALE</option>
+            <option value="cmyk">CMYK</option>
+            <option value="bitmap">BITMAP</option>
+          </select>
+        </label>
+        <label class="setting-field output-field">
+          <span>Output Folder</span>
+          <div class="output-row">
+            <input type="text" id="outputDir" placeholder="Paste path or click Browse…" spellcheck="false" />
+            <button type="button" class="btn-browse" id="browseOutputBtn">BROWSE</button>
+          </div>
+          <p class="folder-status" id="folderStatus"></p>
+        </label>
+      </div>
+    </section>
+
+    <section class="stats-row">
+      <div class="stat-card">
+        <span class="stat-label">PDF Information</span>
+        <strong class="stat-value" id="statPages">—</strong>
+        <span class="stat-sub" id="statPagesSub">Pages</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Images Found</span>
+        <strong class="stat-value" id="statImages">0</strong>
+        <span class="stat-sub">Total Images</span>
+      </div>
+      <div class="stat-card stat-progress">
+        <span class="stat-label">Progress</span>
+        <div class="progress-ring" id="progressRing">
+          <svg viewBox="0 0 36 36">
+            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="ring-fill" id="ringFill" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="ring-text" id="statPercent">0%</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Current Page</span>
+        <strong class="stat-value" id="statCurrentPage">—</strong>
+        <span class="stat-sub" id="statPageStatus">Idle</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Queue</span>
+        <span class="queue-dot" id="queueDot"></span>
+        <strong class="stat-value queue-msg" id="statQueue">Ready</strong>
+      </div>
+    </section>
+
+    <section class="panel-row log-timer">
+      <div class="panel log-panel">
+        <h2>Processing Log</h2>
+        <ul class="log-list" id="logList"></ul>
+      </div>
+      <div class="panel timer-panel">
+        <h2>Processing Timer</h2>
+        <div class="timer-display" id="timerDisplay">00 : 00</div>
+        <p class="timer-label">Timer</p>
+      </div>
+    </section>
+
+    <section class="panel output-panel">
+      <h2>Output Images</h2>
+      <div class="thumb-grid" id="thumbGrid">
+        <p class="thumb-placeholder" id="thumbPlaceholder">Cropped image thumbnails appear here</p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p class="quote">"Learning never exhausts the mind."</p>
+      <span class="version">v1.0 · Local</span>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
