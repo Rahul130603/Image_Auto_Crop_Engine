@@ -421,8 +421,14 @@ if STATIC_DIR.exists():
 
 
 def main():
-    print("Open in browser: http://127.0.0.1:8000")
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    import os
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        log_level="info"
+    )
 
 
 if __name__ == "__main__":
