@@ -446,32 +446,41 @@ def _write_crop(
     out_path = settings.output_dir / out_name
     save_dpi = settings.dpi
 
-    if color == "cmyk":
-        if ext == ".pdf":
-            save_as_pdf(bgr, out_path, dpi=save_dpi, color_mode="cmyk")
+    out_path = out_path.resolve()
+    try:
+        if color == "cmyk":
+            if ext == ".pdf":
+                save_as_pdf(bgr, out_path, dpi=save_dpi, color_mode="cmyk")
+            elif ext == ".png":
+                save_cmyk_png(bgr, out_path, dpi=save_dpi)
+            else:
+                save_cmyk_image(bgr, out_path, dpi=save_dpi)
+        elif ext == ".pdf":
+            save_as_pdf(bgr, out_path, dpi=save_dpi, color_mode=color)
+        elif ext == ".tif":
+            if color == "grayscale":
+                save_image(bgr, out_path, "grayscale_tiff", dpi=save_dpi)
+            else:
+                save_image(bgr, out_path, "rgb_tiff", dpi=save_dpi)
         elif ext == ".png":
-            save_cmyk_png(bgr, out_path, dpi=save_dpi)
-        else:
-            save_cmyk_image(bgr, out_path, dpi=save_dpi)
-    elif ext == ".pdf":
-        save_as_pdf(bgr, out_path, dpi=save_dpi, color_mode=color)
-    elif ext == ".tif":
-        if color == "grayscale":
-            save_image(bgr, out_path, "grayscale_tiff", dpi=save_dpi)
-        else:
-            save_image(bgr, out_path, "rgb_tiff", dpi=save_dpi)
-    elif ext == ".png":
-        if color == "grayscale":
-            save_image(bgr, out_path, "grayscale", dpi=save_dpi)
+            if color == "grayscale":
+                save_image(bgr, out_path, "grayscale", dpi=save_dpi)
+            else:
+                save_image(bgr, out_path, "rgb", dpi=save_dpi)
         else:
             save_image(bgr, out_path, "rgb", dpi=save_dpi)
-    else:
-        save_image(bgr, out_path, "rgb", dpi=save_dpi)
+    except OSError as exc:
+        settings.log(f"Save failed: {out_path} — {exc}")
+        return False
+
+    if not out_path.is_file():
+        settings.log(f"Save failed: file not created — {out_path}")
+        return False
 
     settings._saved_total += 1
     settings.log(
         f"Saved {bgr.shape[1]}x{bgr.shape[0]} px — "
-        f"{settings.color_mode.upper()} @ {save_dpi} DPI → {out_path.name}"
+        f"{settings.color_mode.upper()} @ {save_dpi} DPI → {out_path}"
     )
     settings.status(
         images_saved=settings._saved_total,
@@ -623,5 +632,6 @@ def run_crop_job(
             )
 
     settings.status(progress_percent=100, queue_status="done")
-    settings.log(f"Finished. {total_saved} image(s) saved to {settings.output_dir}")
+    folder = settings.output_dir.resolve()
+    settings.log(f"Finished. {total_saved} image(s) saved to {folder}")
     return total_saved

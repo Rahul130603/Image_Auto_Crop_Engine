@@ -49,6 +49,13 @@ function setRunning(running) {
   queueDot.className = "queue-dot" + (running ? " running" : "");
 }
 
+const OUTPUT_DIR_KEY = "cropToolOutputDir";
+
+function saveOutputDirPreference() {
+  const path = outputDir.value.trim();
+  if (path) localStorage.setItem(OUTPUT_DIR_KEY, path);
+}
+
 function updateFolderStatus() {
   const path = outputDir.value.trim();
   if (!path) {
@@ -56,7 +63,7 @@ function updateFolderStatus() {
     folderStatus.className = "folder-status";
     return;
   }
-  folderStatus.textContent = "Folder is ready";
+  folderStatus.textContent = "Folder path set (must exist on this PC where server runs)";
   folderStatus.className = "folder-status ready";
 }
 
@@ -204,11 +211,15 @@ browseOutputBtn.addEventListener("click", async (e) => {
   const data = await res.json();
   if (data.path) {
     outputDir.value = data.path;
+    saveOutputDirPreference();
     updateFolderStatus();
   }
 });
 
-outputDir.addEventListener("input", updateFolderStatus);
+outputDir.addEventListener("input", () => {
+  saveOutputDirPreference();
+  updateFolderStatus();
+});
 
 function updateCmykHint() {
   const hint = document.getElementById("cmykHint");
@@ -246,9 +257,17 @@ startBtn.addEventListener("click", async () => {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    alert(typeof err.detail === "string" ? err.detail : "Could not start");
+    const msg =
+      typeof err.detail === "string"
+        ? err.detail
+        : Array.isArray(err.detail)
+          ? err.detail.map((d) => d.msg || d).join("\n")
+          : "Could not start — check output folder path";
+    alert(msg);
     return;
   }
+
+  saveOutputDirPreference();
 
   setRunning(true);
   startLocalTimer();
@@ -334,6 +353,8 @@ function startPolling() {
     darkModeToggle.checked = true;
     document.body.classList.add("dark");
   }
+  const savedOut = localStorage.getItem(OUTPUT_DIR_KEY);
+  if (savedOut) outputDir.value = savedOut;
   setRing(0);
   setRunning(false);
   updateFolderStatus();

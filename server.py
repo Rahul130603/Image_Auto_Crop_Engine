@@ -166,6 +166,39 @@ class StartJobRequest(BaseModel):
     output_format: str = "png"
 
 
+def _resolve_output_dir(path_str: str) -> Path:
+    """Resolve to absolute path on the machine running the server and verify writable."""
+    raw = path_str.strip()
+    if not raw:
+        raise HTTPException(400, "Choose an output folder")
+
+    path = Path(raw).expanduser()
+    try:
+        path = path.resolve()
+    except OSError as exc:
+        raise HTTPException(400, f"Invalid output folder path: {raw}") from exc
+
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise HTTPException(
+            400,
+            f"Cannot create output folder: {path} — {exc}",
+        ) from exc
+
+    probe = path / ".crop_tool_write_test"
+    try:
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+    except OSError as exc:
+        raise HTTPException(
+            400,
+            f"Cannot write to output folder: {path} — {exc}",
+        ) from exc
+
+    return path
+
+
 def _pdf_page_count(path: Path) -> int:
     if path.suffix.lower() != ".pdf":
         return 0
@@ -341,9 +374,7 @@ def start_job(body: StartJobRequest):
     if not job.uploaded_files:
         raise HTTPException(400, "Add files first (drag & drop or browse)")
 
-    output_dir = Path(body.output_dir.strip())
-    if not body.output_dir.strip():
-        raise HTTPException(400, "Choose an output folder")
+    output_dir = _resolve_output_dir(body.output_dir)
 
     dpi = body.dpi
     if dpi not in DPI_OPTIONS:
@@ -359,11 +390,6 @@ def start_job(body: StartJobRequest):
             400, f"Invalid output format. Use: {', '.join(OUTPUT_FORMATS)}"
         )
 
-    try:
-        output_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        raise HTTPException(400, f"Cannot create output folder: {exc}") from exc
-
     job.reset_cancel()
     job.clear_job()
     job.output_dir = output_dir
@@ -371,8 +397,9 @@ def start_job(body: StartJobRequest):
     job.append_log("Detecting images…")
     job.append_log(
         f"Starting — DPI: {dpi}, colour: {color_mode.upper()}, "
-        f"save as: {output_format.upper()}, folder: {output_dir}"
+        f"save as: {output_format.upper()}"
     )
+    job.append_log(f"Output folder: {output_dir}")
 
     def on_status(data: dict) -> None:
         job.update_status(data)
@@ -387,7 +414,7 @@ def start_job(body: StartJobRequest):
         should_cancel=job.is_cancelled,
     )
 
-    paths = [entry["path"] for entry in job.uploaded_files]
+    paths = [Path(entry["path"]) for entry in job.uploaded_files]
     display_names = [entry["display_name"] for entry in job.uploaded_files]
     job.append_log("Queue: " + ", ".join(display_names))
 
